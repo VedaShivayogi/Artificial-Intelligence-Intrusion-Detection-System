@@ -24,8 +24,8 @@ An intelligent web-based Intrusion Detection System (IDS) that uses deep learnin
 ### Step 1: Clone the Repository
 
 ```bash
-git clone <repository-url>
-cd ai-ids
+git clone https://github.com/VedaShivayogi/Artificial-Intelligence-Intrusion-Detection-System
+cd Artificial-Intelligence-Intrusion-Detection-System
 ```
 
 ### Step 2: Install Dependencies
@@ -190,10 +190,6 @@ Recommendation: Isolate affected systems immediately. Block suspicious IPs.
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## ⚠️ Disclaimer
 
-This IDS is for educational and research purposes. It should not be used as the sole security measure in production environments. Always combine with other security tools and professional monitoring.
 
-## 📞 Support
 
-For questions or issues, please open an issue on GitHub or contact the development team.
