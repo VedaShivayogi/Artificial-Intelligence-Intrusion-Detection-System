@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AI IDS — Intrusion Detection System</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#f0f4f8;
+      --surface:#ffffff;
+      --card:#ffffff;
+      --card2:#f8fafc;
+      --border:#dde3ea;
+      --border2:#e8edf2;
+      --text:#1a2332;
+      --sub:#4a5568;
+      --muted:#8896a7;
+      --blue:#1d6fdb;
+      --blue-soft:#ebf3ff;
+      --green:#16a34a;
+      --green-soft:#f0fdf4;
+      --green-border:#bbf7d0;
+      --amber:#d97706;
+      --amber-soft:#fffbeb;
+      --amber-border:#fde68a;
+      --red:#dc2626;
+      --red-soft:#fef2f2;
+      --red-border:#fecaca;
+      --purple:#7c3aed;
+      --purple-soft:#f5f3ff;
+      --slate:#64748b;
+    }
+    html,body{min-height:100vh;background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-size:14px;line-height:1.6}
+    a{color:var(--blue);text-decoration:none}
+
+    /* ── Layout ── */
+    .wrapper{max-width:1140px;margin:0 auto;padding:28px 20px 60px}
+
+    /* ── Top Nav ── */
+    nav{
+      display:flex;align-items:center;justify-content:space-between;
+      background:var(--surface);border:1px solid var(--border);border-radius:12px;
+      padding:14px 24px;margin-bottom:28px;
+      box-shadow:0 1px 4px rgba(0,0,0,0.06)
+    }
+    .nav-brand{display:flex;align-items:center;gap:10px}
+    .nav-logo{
+      width:36px;height:36px;border-radius:8px;
+      background:linear-gradient(135deg,#1d6fdb,#7c3aed);
+      display:flex;align-items:center;justify-content:center;font-size:18px
+    }
+    .nav-title{font-size:16px;font-weight:700;color:var(--text)}
+    .nav-title span{color:var(--blue)}
+    .nav-badge{font-size:10px;font-weight:600;letter-spacing:.08em;padding:3px 8px;border-radius:20px;background:var(--blue-soft);color:var(--blue)}
+    .nav-right{display:flex;align-items:center;gap:12px}
+    .status-pill{display:flex;align-items:center;gap:6px;padding:5px 12px;border-radius:20px;background:var(--green-soft);border:1px solid var(--green-border);font-size:11px;font-weight:600;color:var(--green)}
+    .pulse{width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+    @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(22,163,74,0.4)}50%{box-shadow:0 0 0 5px rgba(22,163,74,0)}}
+
+    /* ── Upload Card ── */
+    .upload-card{
+      background:var(--surface);border:1px solid var(--border);border-radius:12px;
+      padding:32px;margin-bottom:28px;
+      box-shadow:0 1px 4px rgba(0,0,0,0.06)
+    }
+    .section-label{font-size:11px;font-weight:600;letter-spacing:.1em;color:var(--muted);text-transform:uppercase;margin-bottom:16px}
+    .drop-zone{
+      border:2px dashed var(--border);border-radius:10px;padding:36px 24px;
+      text-align:center;transition:all .25s;background:var(--card2);position:relative;cursor:pointer
+    }
+    .drop-zone:hover{border-color:var(--blue);background:var(--blue-soft)}
+    .drop-zone input[type="file"]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+    .drop-icon{font-size:32px;margin-bottom:10px}
+    .drop-title{font-size:15px;font-weight:600;color:var(--text);margin-bottom:6px}
+    .drop-sub{font-size:13px;color:var(--muted)}
+    .drop-sub span{color:var(--blue);font-weight:500}
+    .upload-actions{display:flex;align-items:center;gap:12px;margin-top:20px;justify-content:center;flex-wrap:wrap}
+    #fn{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--slate);background:var(--card2);padding:6px 12px;border-radius:6px;border:1px solid var(--border2)}
+    .btn-primary{
+      padding:10px 28px;background:var(--blue);color:#fff;border:none;border-radius:8px;
+      font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:6px
+    }
+    .btn-primary:hover{background:#1558b0;transform:translateY(-1px);box-shadow:0 4px 12px rgba(29,111,219,0.3)}
+    .format-tags{display:flex;gap:6px;justify-content:center;margin-top:14px;flex-wrap:wrap}
+    .tag{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:500;background:var(--card2);border:1px solid var(--border2);color:var(--sub)}
+
+    /* ── Result Banner ── */
+    .result-banner{
+      border-radius:12px;padding:20px 24px;margin-bottom:24px;
+      display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;
+      animation:slideIn .4s ease
+    }
+    @keyframes slideIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+    .result-banner.low{background:var(--green-soft);border:1px solid var(--green-border)}
+    .result-banner.medium{background:var(--amber-soft);border:1px solid var(--amber-border)}
+    .result-banner.high{background:var(--red-soft);border:1px solid var(--red-border)}
+    .banner-left{display:flex;align-items:center;gap:14px}
+    .banner-icon{font-size:28px}
+    .banner-title{font-size:18px;font-weight:700}
+    .banner-title.low{color:var(--green)}
+    .banner-title.medium{color:var(--amber)}
+    .banner-title.high{color:var(--red)}
+    .banner-sub{font-size:12px;color:var(--sub);margin-top:2px}
+    .confidence-badge{
+      padding:8px 18px;border-radius:8px;font-size:13px;font-weight:700;
+      background:rgba(255,255,255,0.7);border:1px solid rgba(0,0,0,0.08)
+    }
+
+    /* ── Recommendation ── */
+    .rec-box{
+      border-radius:10px;padding:14px 18px;margin-bottom:24px;
+      display:flex;align-items:flex-start;gap:12px;font-size:13px;
+      border-left:4px solid
+    }
+    .rec-box.low{background:var(--green-soft);border-color:var(--green);color:var(--green)}
+    .rec-box.medium{background:var(--amber-soft);border-color:var(--amber);color:var(--amber)}
+    .rec-box.high{background:var(--red-soft);border-color:var(--red);color:var(--red)}
+    .rec-label{font-weight:700;margin-bottom:2px;font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+    .rec-text{color:var(--text);font-size:13px}
+
+    /* ── KPI Grid ── */
+    .kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
+    .kpi-card{
+      background:var(--surface);border:1px solid var(--border);border-radius:12px;
+      padding:20px 18px;box-shadow:0 1px 4px rgba(0,0,0,0.05);transition:box-shadow .2s
+    }
+    .kpi-card:hover{box-shadow:0 4px 16px rgba(0,0,0,0.1)}
+    .kpi-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+    .kpi-icon{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:17px}
+    .kpi-icon.red{background:var(--red-soft)}
+    .kpi-icon.amber{background:var(--amber-soft)}
+    .kpi-icon.blue{background:var(--blue-soft)}
+    .kpi-icon.purple{background:var(--purple-soft)}
+    .kpi-trend{font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px}
+    .kpi-trend.red{background:var(--red-soft);color:var(--red)}
+    .kpi-trend.amber{background:var(--amber-soft);color:var(--amber)}
+    .kpi-trend.blue{background:var(--blue-soft);color:var(--blue)}
+    .kpi-trend.purple{background:var(--purple-soft);color:var(--purple)}
+    .kpi-value{font-size:30px;font-weight:700;color:var(--text);font-family:'JetBrains Mono',monospace;line-height:1}
+    .kpi-label{font-size:12px;color:var(--muted);margin-top:4px;font-weight:500}
+
+    /* ── Two-col grid ── */
+    .two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:24px}
+    .three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:24px}
+
+    /* ── Panel card ── */
+    .panel{
+      background:var(--surface);border:1px solid var(--border);border-radius:12px;
+      padding:22px;box-shadow:0 1px 4px rgba(0,0,0,0.05)
+    }
+    .panel-title{font-size:13px;font-weight:700;color:var(--text);margin-bottom:16px;display:flex;align-items:center;gap:8px}
+    .panel-title span{color:var(--blue)}
+
+    /* ── Probability bars ── */
+    .prob-row{margin-bottom:14px}
+    .prob-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px}
+    .prob-name{font-size:12px;font-weight:600;color:var(--sub)}
+    .prob-pct{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600}
+    .prob-bar-bg{height:8px;background:var(--card2);border-radius:20px;overflow:hidden;border:1px solid var(--border2)}
+    .prob-bar{height:100%;border-radius:20px;transition:width .8s ease}
+    .prob-bar.green{background:linear-gradient(90deg,#16a34a,#22c55e)}
+    .prob-bar.amber{background:linear-gradient(90deg,#d97706,#f59e0b)}
+    .prob-bar.red{background:linear-gradient(90deg,#dc2626,#ef4444)}
+
+    /* ── File Info table ── */
+    .info-table{width:100%;border-collapse:collapse}
+    .info-table tr{border-bottom:1px solid var(--border2)}
+    .info-table tr:last-child{border-bottom:none}
+    .info-table td{padding:9px 0;font-size:13px}
+    .info-table td:first-child{color:var(--muted);font-weight:500;width:45%}
+    .info-table td:last-child{color:var(--text);font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;text-align:right}
+
+    /* ── Risk meter ── */
+    .risk-meter{text-align:center;padding:8px 0}
+    .risk-ring{position:relative;width:120px;height:120px;margin:0 auto 12px}
+    .risk-ring svg{transform:rotate(-90deg)}
+    .risk-ring-text{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+    .risk-score{font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:700;color:var(--text)}
+    .risk-unit{font-size:10px;color:var(--muted);font-weight:500}
+    .risk-level-badge{display:inline-block;padding:4px 14px;border-radius:20px;font-size:12px;font-weight:700}
+    .risk-level-badge.low{background:var(--green-soft);color:var(--green);border:1px solid var(--green-border)}
+    .risk-level-badge.medium{background:var(--amber-soft);color:var(--amber);border:1px solid var(--amber-border)}
+    .risk-level-badge.high,.risk-level-badge.critical{background:var(--red-soft);color:var(--red);border:1px solid var(--red-border)}
+
+    /* ── Chart ── */
+    .chart-wrap{position:relative;height:200px}
+
+    /* ── Event breakdown ── */
+    .event-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border2)}
+    .event-row:last-child{border-bottom:none}
+    .event-left{display:flex;align-items:center;gap:10px}
+    .event-dot{width:10px;height:10px;border-radius:50%}
+    .event-name{font-size:13px;font-weight:500;color:var(--sub)}
+    .event-count{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:var(--text)}
+    .event-bar-wrap{flex:1;margin:0 16px;height:6px;background:var(--card2);border-radius:10px;overflow:hidden}
+    .event-bar{height:100%;border-radius:10px}
+
+    /* ── How it works ── */
+    .steps{display:flex;gap:0;margin-top:4px}
+    .step{flex:1;text-align:center;padding:14px 10px;position:relative}
+    .step:not(:last-child)::after{content:'→';position:absolute;right:-8px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:16px}
+    .step-num{width:32px;height:32px;border-radius:50%;background:var(--blue-soft);color:var(--blue);font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;margin:0 auto 8px}
+    .step-title{font-size:12px;font-weight:600;color:var(--text);margin-bottom:4px}
+    .step-sub{font-size:11px;color:var(--muted)}
+
+    /* ── Supported formats ── */
+    .fmt-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px}
+    .fmt-item{border:1px solid var(--border2);border-radius:8px;padding:10px 12px;background:var(--card2)}
+    .fmt-ext{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:var(--blue);margin-bottom:3px}
+    .fmt-desc{font-size:11px;color:var(--muted)}
+
+    /* ── Attack Types ── */
+    .attack-item{padding:10px 0;border-bottom:1px solid var(--border2)}
+    .attack-item:last-child{border-bottom:none}
+    .attack-name{font-size:13px;font-weight:600;color:var(--text);margin-bottom:3px}
+    .attack-desc{font-size:12px;color:var(--muted)}
+    .attack-badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;margin-bottom:5px}
+    .attack-badge.normal{background:var(--green-soft);color:var(--green)}
+    .attack-badge.medium{background:var(--amber-soft);color:var(--amber)}
+    .attack-badge.high{background:var(--red-soft);color:var(--red)}
+
+    /* ── Footer ── */
+    footer{text-align:center;padding-top:24px;border-top:1px solid var(--border);color:var(--muted);font-size:12px;margin-top:28px}
+    footer strong{color:var(--blue)}
+
+    @media(max-width:720px){
+      .kpi-grid{grid-template-columns:repeat(2,1fr)}
+      .two-col,.three-col{grid-template-columns:1fr}
+      .steps{flex-direction:column}
+      .step:not(:last-child)::after{content:'↓';right:auto;left:50%;top:auto;bottom:-10px}
+    }
+  </style>
+</head>
+<body>
+<div class="wrapper">
+
+  <!-- Nav -->
+  <nav>
+    <div class="nav-brand">
+      <div class="nav-logo">🛡️</div>
+      <div>
+        <div class="nav-title">AI <span>IDS</span></div>
+        <div style="font-size:11px;color:var(--muted)">Neural Intrusion Detection System</div>
+      </div>
+    </div>
+    <div class="nav-right">
+      <span class="nav-badge">v2.0</span>
+      <div class="status-pill"><div class="pulse"></div> System Online</div>
+    </div>
+  </nav>
+
+  <!-- Upload -->
+  <div class="upload-card">
+    <div class="section-label">Upload Network Log for Analysis</div>
+    <form method="post" action="/analyze" enctype="multipart/form-data" id="upload-form">
+      <div class="drop-zone">
+        <input type="file" name="file" required onchange="document.getElementById('fn').textContent=this.files[0]?this.files[0].name:'No file chosen'"/>
+        <div class="drop-icon">📂</div>
+        <div class="drop-title">Drop your file here or click to browse</div>
+        <div class="drop-sub">Supports <span>.csv · .log · .txt · .pcap</span> formats</div>
+      </div>
+      <div class="upload-actions">
+        <span id="fn" style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--slate);background:var(--card2);padding:6px 12px;border-radius:6px;border:1px solid var(--border2)">No file chosen</span>
+        <button type="submit" class="btn-primary">🔍 Run Analysis</button>
+      </div>
+    </form>
+    <div class="format-tags">
+      <span class="tag">📄 .log — System logs</span>
+      <span class="tag">📋 .csv — Structured data</span>
+      <span class="tag">📦 .pcap — Packet capture</span>
+      <span class="tag">📝 .txt — Text logs</span>
+    </div>
+  </div>
+
+  {% if result %}
+
+  <!-- Result Banner -->
+  <div class="result-banner {{ severity }}">
+    <div class="banner-left">
+      <div class="banner-icon">{% if severity == 'low' %}✅{% elif severity == 'medium' %}⚠️{% else %}🚨{% endif %}</div>
+      <div>
+        <div class="banner-title {{ severity }}">{{ result }}</div>
+        <div class="banner-sub">Analyzed: {{ file_name }} &nbsp;·&nbsp; {{ analyzed_at }}</div>
+      </div>
+    </div>
+    <div class="confidence-badge">🎯 {{ confidence }}% Confidence</div>
+  </div>
+
+  <!-- Recommendation -->
+  <div class="rec-box {{ severity }}">
+    <div style="font-size:18px">{% if severity == 'low' %}💡{% elif severity == 'medium' %}⚡{% else %}🔥{% endif %}</div>
+    <div>
+      <div class="rec-label">Recommended Action</div>
+      <div class="rec-text">{{ recommendation }}</div>
+    </div>
+  </div>
+
+  <!-- KPIs -->
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-top">
+        <div class="kpi-icon red">🔴</div>
+        <span class="kpi-trend red">Critical</span>
+      </div>
+      <div class="kpi-value">{{ error }}</div>
+      <div class="kpi-label">Errors Detected</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-top">
+        <div class="kpi-icon amber">🟡</div>
+        <span class="kpi-trend amber">Warning</span>
+      </div>
+      <div class="kpi-value">{{ warning }}</div>
+      <div class="kpi-label">Warnings Flagged</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-top">
+        <div class="kpi-icon blue">📦</div>
+        <span class="kpi-trend blue">Captured</span>
+      </div>
+      <div class="kpi-value">{{ packets }}</div>
+      <div class="kpi-label">Network Packets</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-top">
+        <div class="kpi-icon purple">⚡</div>
+        <span class="kpi-trend purple">{{ risk_level }}</span>
+      </div>
+      <div class="kpi-value">{{ threat }}</div>
+      <div class="kpi-label">Threat Score</div>
+    </div>
+  </div>
+
+  <!-- Row: Probability + Risk Meter + File Info -->
+  <div class="three-col">
+
+    <!-- AI Confidence -->
+    <div class="panel">
+      <div class="panel-title">🤖 <span>AI</span> Classification Probabilities</div>
+      <div class="prob-row">
+        <div class="prob-header">
+          <span class="prob-name">✅ Normal Traffic</span>
+          <span class="prob-pct" style="color:var(--green)">{{ prob_normal }}%</span>
+        </div>
+        <div class="prob-bar-bg"><div class="prob-bar green" style="width:{{ prob_normal }}%"></div></div>
+      </div>
+      <div class="prob-row">
+        <div class="prob-header">
+          <span class="prob-name">⚠️ Probe Attack</span>
+          <span class="prob-pct" style="color:var(--amber)">{{ prob_probe }}%</span>
+        </div>
+        <div class="prob-bar-bg"><div class="prob-bar amber" style="width:{{ prob_probe }}%"></div></div>
+      </div>
+      <div class="prob-row">
+        <div class="prob-header">
+          <span class="prob-name">🚨 DoS Attack</span>
+          <span class="prob-pct" style="color:var(--red)">{{ prob_dos }}%</span>
+        </div>
+        <div class="prob-bar-bg"><div class="prob-bar red" style="width:{{ prob_dos }}%"></div></div>
+      </div>
+      <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border2);font-size:12px;color:var(--muted)">
+        Model confidence: <strong style="color:var(--blue)">{{ confidence }}%</strong> &nbsp;·&nbsp; Neural Network (TensorFlow)
+      </div>
+    </div>
+
+    <!-- Risk Meter -->
+    <div class="panel" style="text-align:center">
+      <div class="panel-title" style="justify-content:center">⚡ Risk Assessment</div>
+      <div class="risk-meter">
+        <div class="risk-ring">
+          <svg width="120" height="120" viewBox="0 0 120 120">
+            <circle cx="60" cy="60" r="50" fill="none" stroke="var(--border2)" stroke-width="10"/>
+            <circle cx="60" cy="60" r="50" fill="none"
+              stroke="{% if severity=='low' %}#16a34a{% elif severity=='medium' %}#d97706{% else %}#dc2626{% endif %}"
+              stroke-width="10" stroke-linecap="round"
+              stroke-dasharray="314"
+              stroke-dashoffset="{{ [314 - (threat / 200 * 314), 0]|max }}"/>
+          </svg>
+          <div class="risk-ring-text">
+            <div class="risk-score">{{ threat }}</div>
+            <div class="risk-unit">SCORE</div>
+          </div>
+        </div>
+        <div class="risk-level-badge {{ risk_level | lower }}">{{ risk_level }} Risk</div>
+        <div style="margin-top:14px;font-size:12px;color:var(--muted)">
+          Formula: Errors×2 + Warnings + Packets÷100
+        </div>
+      </div>
+    </div>
+
+    <!-- File Info -->
+    <div class="panel">
+      <div class="panel-title">📁 <span>File</span> Information</div>
+      <table class="info-table">
+        <tr><td>File Name</td><td>{{ file_name }}</td></tr>
+        <tr><td>File Type</td><td>{{ file_type }}</td></tr>
+        <tr><td>File Size</td><td>{{ file_size }}</td></tr>
+        <tr><td>Analyzed At</td><td>{{ analyzed_at }}</td></tr>
+        <tr><td>Total Events</td><td>{{ total_events }}</td></tr>
+        <tr><td>Errors Found</td><td style="color:var(--red)">{{ error }}</td></tr>
+        <tr><td>Warnings Found</td><td style="color:var(--amber)">{{ warning }}</td></tr>
+        <tr><td>Packets Found</td><td style="color:var(--blue)">{{ packets }}</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- Row: Chart + Event Breakdown -->
+  <div class="two-col">
+    <div class="panel">
+      <div class="panel-title">📊 <span>Metric</span> Visualization</div>
+      <div class="chart-wrap"><canvas id="chart"></canvas></div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">📋 <span>Event</span> Breakdown</div>
+      {% set total = [error + warning + packets, 1]|max %}
+      <div class="event-row">
+        <div class="event-left"><div class="event-dot" style="background:var(--red)"></div><div class="event-name">Critical Errors</div></div>
+        <div class="event-bar-wrap"><div class="event-bar" style="width:{{ (error/total*100)|round }}%;background:var(--red)"></div></div>
+        <div class="event-count">{{ error }}</div>
+      </div>
+      <div class="event-row">
+        <div class="event-left"><div class="event-dot" style="background:var(--amber)"></div><div class="event-name">Warnings</div></div>
+        <div class="event-bar-wrap"><div class="event-bar" style="width:{{ (warning/total*100)|round }}%;background:var(--amber)"></div></div>
+        <div class="event-count">{{ warning }}</div>
+      </div>
+      <div class="event-row">
+        <div class="event-left"><div class="event-dot" style="background:var(--blue)"></div><div class="event-name">Packets</div></div>
+        <div class="event-bar-wrap"><div class="event-bar" style="width:{{ (packets/total*100)|round }}%;background:var(--blue)"></div></div>
+        <div class="event-count">{{ packets }}</div>
+      </div>
+      <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border2)">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:8px;font-weight:600">SEVERITY SUMMARY</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <div style="flex:1;padding:10px;border-radius:8px;background:var(--red-soft);text-align:center">
+            <div style="font-size:18px;font-weight:700;color:var(--red);font-family:'JetBrains Mono',monospace">{{ error }}</div>
+            <div style="font-size:11px;color:var(--muted)">High</div>
+          </div>
+          <div style="flex:1;padding:10px;border-radius:8px;background:var(--amber-soft);text-align:center">
+            <div style="font-size:18px;font-weight:700;color:var(--amber);font-family:'JetBrains Mono',monospace">{{ warning }}</div>
+            <div style="font-size:11px;color:var(--muted)">Medium</div>
+          </div>
+          <div style="flex:1;padding:10px;border-radius:8px;background:var(--blue-soft);text-align:center">
+            <div style="font-size:18px;font-weight:700;color:var(--blue);font-family:'JetBrains Mono',monospace">{{ packets }}</div>
+            <div style="font-size:11px;color:var(--muted)">Packets</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% endif %}
+
+  <!-- Always visible info section -->
+  <div class="two-col">
+    <!-- How it Works -->
+    <div class="panel">
+      <div class="panel-title">⚙️ <span>How</span> It Works</div>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-title">Upload</div>
+          <div class="step-sub">Submit your log, CSV or PCAP file</div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-title">Parse</div>
+          <div class="step-sub">Errors, warnings & packets extracted</div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-title">Predict</div>
+          <div class="step-sub">Deep neural network classifies traffic</div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-title">Report</div>
+          <div class="step-sub">Full analysis with recommendations</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Supported Formats -->
+    <div class="panel">
+      <div class="panel-title">📂 <span>Supported</span> File Formats</div>
+      <div class="fmt-grid">
+        <div class="fmt-item"><div class="fmt-ext">.log / .txt</div><div class="fmt-desc">System & application logs. Scans for ERROR and WARNING keywords.</div></div>
+        <div class="fmt-item"><div class="fmt-ext">.csv</div><div class="fmt-desc">Structured network datasets. Row-level error and warning analysis.</div></div>
+        <div class="fmt-item"><div class="fmt-ext">.pcap</div><div class="fmt-desc">Wireshark packet captures. Counts total network packets via Scapy.</div></div>
+        <div class="fmt-item" style="background:var(--blue-soft);border-color:#bfdbfe">
+          <div class="fmt-ext" style="color:var(--text)">🧠 AI Model</div>
+          <div class="fmt-desc">TensorFlow deep learning — 3-class classifier (Normal / Probe / DoS)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Attack Types Reference -->
+  <div class="panel" style="margin-bottom:24px">
+    <div class="panel-title">🎯 <span>Attack</span> Classification Reference</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px">
+      <div>
+        <div class="attack-item">
+          <span class="attack-badge normal">Label 0</span>
+          <div class="attack-name">✅ Normal Traffic</div>
+          <div class="attack-desc">Regular network activity with no suspicious patterns. Low error and warning counts.</div>
+        </div>
+      </div>
+      <div>
+        <div class="attack-item">
+          <span class="attack-badge medium">Label 1</span>
+          <div class="attack-name">⚠️ Probe / Scan Attack</div>
+          <div class="attack-desc">Reconnaissance activity — port scans, vulnerability probing, or unauthorized discovery attempts.</div>
+        </div>
+      </div>
+      <div>
+        <div class="attack-item">
+          <span class="attack-badge high">Label 2</span>
+          <div class="attack-name">🚨 DoS / DDoS Attack</div>
+          <div class="attack-desc">Denial of Service attack — high volume traffic designed to overwhelm or crash systems.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    🛡️ <strong>AI IDS</strong> — Neural Intrusion Detection System &nbsp;·&nbsp;
+    Built with TensorFlow, Flask &amp; Scapy &nbsp;·&nbsp;
+    All analysis performed locally — no data leaves your server
+  </footer>
+
+</div>
+
+{% if result %}
+<script>
+  new Chart(document.getElementById('chart'),{
+    type:'bar',
+    data:{
+      labels:['Errors','Warnings','Packets (÷10)'],
+      datasets:[{
+        label:'Count',
+        data:[{{ error }}, {{ warning }}, {{ packets / 10 }}],
+        backgroundColor:['rgba(220,38,38,0.15)','rgba(217,119,6,0.15)','rgba(29,111,219,0.15)'],
+        borderColor:['rgba(220,38,38,0.8)','rgba(217,119,6,0.8)','rgba(29,111,219,0.8)'],
+        borderWidth:2,borderRadius:6,
+      }]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{
+        x:{grid:{color:'rgba(0,0,0,0.04)'},ticks:{color:'#8896a7',font:{family:"'Inter',sans-serif",size:11}}},
+        y:{grid:{color:'rgba(0,0,0,0.04)'},ticks:{color:'#8896a7',font:{family:"'Inter',sans-serif",size:11}}}
+      }
+    }
+  });
+</script>
+{% endif %}
+</body>
+</html>
