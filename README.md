@@ -52,6 +52,20 @@ python app.py
 
 Open your browser and navigate to: `http://localhost:5000`
 
+## 🚀 Deployment on Render.com
+
+To deploy this application on Render.com for a live demo:
+
+1. Create a free account on [Render.com](https://render.com)
+2. Connect your GitHub repository: https://github.com/VedaShivayogi/Artificial-Intelligence-Intrusion-Detection-System
+3. Create a new Web Service
+4. Set the runtime to Python 3
+5. Set the build command to pip install -r requirements.txt
+6. Set the start command to python app.py
+7. Deploy the service
+
+Your live demo will be available at the generated Render URL.
+
 ## 📖 Usage Guide
 
 ### Step-by-Step Analysis Process:
@@ -176,7 +190,7 @@ Recommendation: Isolate affected systems immediately. Block suspicious IPs.
 
 ## 🔗 Demo
 
-[Live Demo](https://your-demo-link-here.com) - Try the AI-IDS in your browser
+[Live Demo](https://ai-ids.onrender.com) - Try the AI-IDS in your browser
 
 ## 🤝 Contributing
 
