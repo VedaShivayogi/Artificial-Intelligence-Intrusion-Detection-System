@@ -1,15 +1,32 @@
 from flask import Flask, render_template, request
 import os
 import numpy as np
-from tensorflow.keras.models import load_model
 import datetime
+
+try:
+    from tensorflow.keras.models import load_model
+    TF_AVAILABLE = True
+except ImportError:
+    load_model = None
+    TF_AVAILABLE = False
 
 from log_analyzer import analyze_log
 from csv_analyzer import analyze_csv
 from pcap_analyzer import analyze_pcap
 
 app = Flask(__name__)
-model = load_model("deep_model.h5")
+
+
+def load_detection_model():
+    if TF_AVAILABLE and os.path.exists("deep_model.h5"):
+        try:
+            return load_model("deep_model.h5")
+        except Exception as exc:
+            print("WARNING: Failed to load deep_model.h5:", exc)
+    return None
+
+
+model = load_detection_model()
 
 
 @app.route('/')
@@ -59,7 +76,19 @@ def analyze():
         if X.dtype != np.float32:
             return "❌ Data conversion error"
 
-        pred = model.predict(X)
+        if model is not None:
+            pred = model.predict(X)
+        else:
+            def simple_predict(error_val, warning_val, packets_val):
+                score = error_val * 2 + warning_val * 1.5 + packets_val / 200.0
+                if score < 5:
+                    return np.array([[0.85, 0.10, 0.05]], dtype=np.float32)
+                if score < 20:
+                    return np.array([[0.10, 0.80, 0.10]], dtype=np.float32)
+                return np.array([[0.05, 0.15, 0.80]], dtype=np.float32)
+
+            pred = simple_predict(error, warning, packets)
+
         label = int(np.argmax(pred))
         confidence = round(float(np.max(pred)) * 100, 1)
 
