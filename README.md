@@ -2,7 +2,7 @@
 
 An intelligent web-based Intrusion Detection System (IDS) that uses deep learning to analyze network traffic and detect cyber attacks in real-time.
 
-## 🚀 Features
+##  Features
 
 - **Multi-format Analysis**: Supports PCAP captures, CSV datasets, and log files
 - **Deep Learning Classification**: Neural network trained to detect Normal traffic, Probe attacks, and DoS attacks
