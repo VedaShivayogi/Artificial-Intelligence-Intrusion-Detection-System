@@ -10,7 +10,7 @@ An intelligent web-based Intrusion Detection System (IDS) that uses deep learnin
 - **Comprehensive Reporting**: Detailed analysis with confidence scores, threat levels, and security recommendations
 - **File Upload System**: Secure file handling with automatic cleanup
 
-## 📋 Prerequisites
+##  Prerequisites
 
 - Python 3.8+
 - Flask
