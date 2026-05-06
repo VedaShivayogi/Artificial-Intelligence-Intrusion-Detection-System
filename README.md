@@ -19,7 +19,7 @@ An intelligent web-based Intrusion Detection System (IDS) that uses deep learnin
 - Pandas
 - Scapy (for PCAP analysis)
 
-## 🛠️ Installation
+##  Installation
 
 ### Step 1: Clone the Repository
 
