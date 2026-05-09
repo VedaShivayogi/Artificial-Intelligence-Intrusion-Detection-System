@@ -52,7 +52,7 @@ python app.py
 
 Open your browser and navigate to: `http://localhost:5000`
 
-## 🚀 Deployment on Render.com
+##  Deployment on Render.com
 
 To deploy this application on Render.com for a live demo:
 
