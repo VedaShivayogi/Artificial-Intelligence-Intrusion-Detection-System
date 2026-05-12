@@ -66,7 +66,7 @@ To deploy this application on Render.com for a live demo:
 
 Your live demo will be available at the generated Render URL.
 
-## 📖 Usage Guide
+##  Usage Guide
 
 ### Step-by-Step Analysis Process:
 
