@@ -26,6 +26,7 @@ An intelligent web-based Intrusion Detection System (IDS) that uses deep learnin
 ```bash
 git clone https://github.com/VedaShivayogi/Artificial-Intelligence-Intrusion-Detection-System
 cd Artificial-Intelligence-Intrusion-Detection-System
+
 ```
 
 ### Step 2: Install Dependencies
