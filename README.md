@@ -46,6 +46,7 @@ python deep_model.py
 
 ```bash
 python app.py
+
 ```
 
 ### Step 5: Access the Web Interface
